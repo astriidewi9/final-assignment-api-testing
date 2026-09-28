@@ -1,0 +1,39 @@
+name: API Automated Testing
+
+# Pipeline ini akan berjalan otomatis setiap ada push/PR ke branch main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Ambil kode/file dari repository GitHub
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Install Node.js di server GitHub
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # 3. Install Newman (runner Postman) dan reporter HTML
+      - name: Install Newman & Reporter
+        run: npm install -g newman newman-reporter-htmlextra
+
+      # 4. Jalankan pengujian Postman Collection pakai Newman & CSV
+      - name: Run Postman Collection
+        env:
+          LOGIN_EMAIL: ${{ secrets.AUTH_EMAIL }}
+          LOGIN_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
+        run: |
+          newman run postman/collection.json \
+            -e postman/environment.json \
+            -d postman/data.csv \
+            --env-var "email=$LOGIN_EMAIL" \
+            --env-var "password=$LOGIN_PASSWORD"
